@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flappy Crow 3D - The Obsidian Gauntlet</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for stylish retro-arcade typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Three.js CDN with fallback CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        if (typeof THREE === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"><\/script>');
+        }
+    </script>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- 3D Canvas element rendered by Three.js -->
+    <canvas id="webglCanvas"></canvas>
+
+    <!-- In-Game Heads-Up Display (HUD) -->
+    <div id="hud" class="hud hidden">
+        <div class="hud-top">
+            <div class="score-pill">
+                <span class="score-label">SCORE</span>
+                <span id="scoreDisplay" class="score-value">0</span>
+            </div>
+            
+            <div class="trinket-pill">
+                <span class="trinket-icon">✨</span>
+                <span id="trinketDisplay" class="trinket-value">0</span>
+            </div>
+
+            <div class="high-score-pill">
+                <span class="trophy-icon">🏆</span>
+                <span id="hudBestDisplay" class="best-value">0</span>
+            </div>
+        </div>
+
+        <div class="hud-controls">
+            <button id="camToggleBtn" class="hud-btn" title="Switch Camera (Key: C)">
+                <span class="btn-icon">🎥</span>
+                <span id="camModeLabel" class="btn-text">CHASE CAM</span>
+            </button>
+            <button id="themeToggleBtn" class="hud-btn" title="Change Theme (Key: T)">
+                <span class="btn-icon">🌌</span>
+                <span id="themeModeLabel" class="btn-text">TWILIGHT</span>
+            </button>
+            <button id="audioToggleBtn" class="hud-btn" title="Toggle Sound (Key: M)">
+                <span id="audioIcon" class="btn-icon">🔊</span>
+            </button>
+            <button id="pauseToggleBtn" class="hud-btn" title="Pause Game (Key: P / Esc)">
+                <span id="pauseIcon" class="btn-icon">⏸️</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Start / Title Screen Overlay -->
+    <div id="startScreen" class="overlay">
+        <div class="glass-card start-card">
+            <div class="badge">3D CORVID FLIGHT SIMULATOR</div>
+            <h1 class="game-title">FLAPPY CROW <span class="highlight-3d">3D</span></h1>
+            <p class="subtitle">Spread your dark wings and conquer the stone pillars</p>
+            
+            <div class="crow-preview-hint">
+                <div class="feather-decor">🪶</div>
+                <div class="lore-text">"The clever crow searches for shiny treasures while dodging the treacherous ruins."</div>
+            </div>
+
+            <div class="action-prompt">
+                <button id="startBtn" class="primary-btn pulse-anim">
+                    <span>FLAP WINGS TO START</span>
+                </button>
+                <div class="key-hints">
+                    <span><kbd>SPACE</kbd> or <kbd>CLICK</kbd> to Flap</span>
+                    <span class="divider">•</span>
+                    <span><kbd>C</kbd> Camera</span>
+                    <span class="divider">•</span>
+                    <span><kbd>T</kbd> Theme</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Screen Overlay -->
+    <div id="pauseScreen" class="overlay hidden">
+        <div class="glass-card">
+            <h2>GAME PAUSED</h2>
+            <p>Take a breath, raven.</p>
+            <button id="resumeBtn" class="primary-btn">RESUME</button>
+            <p class="small-hint">Press <kbd>P</kbd> or <kbd>ESC</kbd> to Resume</p>
+        </div>
+    </div>
+
+    <!-- Game Over Screen Overlay -->
+    <div id="gameOverScreen" class="overlay hidden">
+        <div class="glass-card game-over-card">
+            <div class="game-over-header">
+                <div class="skull-icon">💀</div>
+                <h2>FEATHERS DOWN</h2>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">FINAL SCORE</span>
+                    <span id="finalScoreVal" class="stat-number">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">BEST RECORD</span>
+                    <span id="bestScoreVal" class="stat-number gold-glow">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">SHINIES COLLECTED</span>
+                    <span id="finalTrinketsVal" class="stat-number cyan-glow">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">CORVID RANK</span>
+                    <span id="rankVal" class="stat-badge">FLEDGLING</span>
+                </div>
+            </div>
+
+            <div id="newBestBanner" class="new-record-banner hidden">
+                ✨ NEW CORVID HIGH SCORE! ✨
+            </div>
+
+            <div class="game-over-actions">
+                <button id="restartBtn" class="primary-btn restart-btn">
+                    <span>FLY AGAIN</span>
+                </button>
+                <button id="changeCamBtnGameOver" class="secondary-btn">
+                    <span>SWITCH VIEW</span>
+                </button>
+            </div>
+            
+            <p class="quick-restart-tip">Press <kbd>SPACE</kbd> or <kbd>CLICK</kbd> to fly again</p>
+        </div>
+    </div>
+
+    <!-- Mobile Touch Area Visualizer -->
+    <div id="touchGuide" class="touch-guide hidden">
+        TAP ANYWHERE TO FLAP
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
